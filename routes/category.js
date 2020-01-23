@@ -14,6 +14,7 @@ const isEmpty = require("../utility/isEmpty");
 // import models
 const Category = require("../models/Category");
 const Department = require("../models/Department");
+const Product = require("../models/Product");
 
 // create routes
 // route: create a category
@@ -54,7 +55,7 @@ router.post("/category/create", async (req, res) => {
         });
       } else {
         res.status(400).json({
-          message: `There is no departement with id '${departmentId}'.`
+          message: `There is no department with id '${departmentId}'.`
         });
       }
     } else {
@@ -144,6 +145,35 @@ router.post("/category/update", async (req, res) => {
     res.status(200).json({
       message: `The Category with id ${_id} has been successfully updated.`
     });
+  } catch (error) {
+    console.log("error.message", error.message);
+    res.json(error.message);
+  }
+});
+
+// route: remove a category
+router.post("/category/delete", async (req, res) => {
+  try {
+    // test if category exists
+    const _id = req.query._id;
+    // console.log(_id);
+    const categoryToDelete = await Category.findById(_id);
+    // console.log(categoryToDelete);
+    if (!categoryToDelete) {
+      res.status(400).json({ message: `There is no category with id ${_id}.` });
+    } else {
+      const productsToDelete = await Product.find({
+        categoryId: categoryToDelete
+      });
+      // console.log("productsToDelete", productsToDelete);
+      productsToDelete.forEach(async product => {
+        await product.remove();
+      });
+      categoryToDelete.remove();
+      res.status(200).json({
+        message: `category with id ${_id} and all its associated products have been successfully deleted.`
+      });
+    }
   } catch (error) {
     console.log("error.message", error.message);
     res.json(error.message);

@@ -32,9 +32,9 @@ app.use(department);
 //route category
 const category = require("./routes/category");
 app.use(category);
-// // route product
-// const product = require("./routes/product");
-// app.use(product);
+// route product
+const product = require("./routes/product");
+app.use(product);
 
 // returns message for unidentified routes
 app.all("*", (req, res) => {

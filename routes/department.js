@@ -13,6 +13,8 @@ const isEmpty = require("../utility/isEmpty");
 
 // import models
 const Department = require("../models/Department");
+const Category = require("../models/Category");
+const Product = require("../models/Product");
 
 // create routes
 // route: create a department
@@ -104,6 +106,41 @@ router.post("/department/update", async (req, res) => {
       res
         .status(400)
         .json({ message: `Department with title '${title}' already exists.` });
+    }
+  } catch (error) {
+    console.log("error.message", error.message);
+    res.json(error.message);
+  }
+});
+
+// route: remove a department
+router.post("/department/delete", async (req, res) => {
+  try {
+    // test if department exists
+    const _id = req.query._id;
+    // console.log(_id);
+    const departmentToDelete = await Department.findById(_id);
+    //console.log(departmentToDelete);
+    if (!departmentToDelete) {
+      res
+        .status(400)
+        .json({ message: `There is no department with id ${_id}.` });
+    } else {
+      const categoriesToDelete = await Category.find({
+        departmentId: departmentToDelete
+      });
+      // console.log("categoriesToDelete", categoriesToDelete);
+      categoriesToDelete.forEach(async category => {
+        const productsToDelete = await Product.find({ categoryId: category });
+        productsToDelete.forEach(async product => {
+          await product.remove();
+        });
+        await category.remove();
+      });
+      departmentToDelete.remove();
+      res.status(200).json({
+        message: `department with id ${_id} and all its associated products have been successfully deleted.`
+      });
     }
   } catch (error) {
     console.log("error.message", error.message);
