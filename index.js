@@ -32,9 +32,12 @@ app.use(department);
 //route category
 const category = require("./routes/category");
 app.use(category);
-// route product
+// route user
 const product = require("./routes/product");
 app.use(product);
+// route user
+const user = require("./routes/user");
+app.use(user);
 
 // returns message for unidentified routes
 app.all("*", (req, res) => {
