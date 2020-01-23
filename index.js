@@ -38,6 +38,9 @@ app.use(product);
 // route user
 const user = require("./routes/user");
 app.use(user);
+// route review
+const review = require("./routes/review");
+app.use(review);
 
 // returns message for unidentified routes
 app.all("*", (req, res) => {

@@ -14,7 +14,7 @@ module.exports = mongoose.model("Product", {
       ref: "Review"
     }
   ],
-  averageRating: { type: Number, min: 0, max: 5 },
+  averageRating: { type: Number, min: 0, max: 5, default: 0 },
   categoryId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category"
