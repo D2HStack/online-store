@@ -68,7 +68,7 @@ router.post("/category/create", async (req, res) => {
   }
 });
 
-// route: list all categorys with count
+// route: list all categories with count
 router.get("/category", async (req, res) => {
   try {
     const categories = await Category.find().populate("departmentId");
@@ -88,35 +88,62 @@ router.get("/category", async (req, res) => {
 // route: update a category
 router.post("/category/update", async (req, res) => {
   try {
-    // test if request is empty or keys in keysTest are empty
-    const keysTest = ["title"];
-    const IsEmptyFields = isEmpty(req.fields, keysTest);
-    //console.log(IsEmptyFields);
-    if (IsEmptyFields.empty || IsEmptyFields.keys.length > 0) {
-      res.status(400).json({
-        message: "Please fill in the empty fields."
-      });
+    // test if category exists
+    const _id = req.query._id;
+    const categoryToUpdate = await Category.findById(_id);
+    // console.log(categoryToUpdate);
+    if (!categoryToUpdate) {
+      res.status(400).json({ message: `There is no category with id ${_id}.` });
     }
+    // assign values to local variables. if no key or empty key by default return key value of original item
 
-    // check if category with title already exists
-    const title = req.fields.title;
-    // console.log("title", title);
-    const category = await category.findOne({ title });
-    // console.log("category", category);
-    if (!category) {
-      const categoryToUpdate = await category.findById(req.query._id);
-      // console.log(categoryToUpdate);
-      categoryToUpdate.title = title;
-      await categoryToUpdate.save();
-
-      res.status(200).json({
-        message: `category has been successfully updated with title '${title}'.`
+    let title = req.fields.title;
+    if (!title) {
+      title = categoryToUpdate.title;
+    }
+    // test if title exists in the request and is not already taken by another
+    // console.log(await Category.findOne({ _id: { $ne: _id }, title }));
+    const titleCategory = await Category.findOne({
+      _id: { $ne: _id },
+      title
+    });
+    // console.log("titleCategory", titleCategory);
+    const titleFlag = Boolean(titleCategory);
+    // console.log(titleFlag);
+    if (titleFlag) {
+      res.status(400).json({
+        message: `The title '${title}' is already taken by another category`
       });
     } else {
-      res
-        .status(400)
-        .json({ message: `category with title '${title}' already exists.` });
+      categoryToUpdate.title = title;
     }
+
+    // assign description to category to be updated if no description key in the query
+    let description = req.fields.description;
+    if (!description) {
+      description = categoryToUpdate.description;
+    }
+    categoryToUpdate.description = description;
+
+    // if department is null in the request assign existing department
+    let departmentId = req.fields.departmentId;
+    if (!departmentId) {
+      departmentId = categoryToUpdate.departmentId;
+    } else {
+      // department does not exist => error
+      const newDepartment = await Department.findById(departmentId);
+      if (!newDepartment) {
+        res
+          .status(400)
+          .json({ message: `There is no department with id ${departmentId}` });
+      }
+    }
+    categoryToUpdate.departmentId = departmentId;
+
+    await categoryToUpdate.save();
+    res.status(200).json({
+      message: `The Category with id ${_id} has been successfully updated.`
+    });
   } catch (error) {
     console.log("error.message", error.message);
     res.json(error.message);
